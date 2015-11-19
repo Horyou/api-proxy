@@ -1,7 +1,7 @@
 var koa = require('koa');
 var path = require('path');
 var Promise = require('bluebird');
-var fs = Promise.promisifyAll(require("fs"));
+var fs = Promise.promisifyAll(require('fs'));
 var superagent = Promise.promisifyAll(require('superagent'));
 
 app = koa();
