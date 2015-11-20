@@ -1,13 +1,14 @@
 var koa = require('koa');
 var path = require('path');
 var Promise = require('bluebird');
-var fs = Promise.promisifyAll(require('fs'));
-var superagent = Promise.promisifyAll(require('superagent'));
+var fs = require('mz/fs');
+var agent = require('superagent').agent();
 
 app = koa();
 var router = require('koa-router')();
 
 var root = path.join(__dirname, 'public');
+var host = process.env.HOST || 'http://localhost:5000/api';
 
 var json = require('koa-json');
 app.use(json());
@@ -22,24 +23,49 @@ app.use(function* (next) {
   }
 });
 
-router.all('*', function (next) {
-  console.log('api');
-  console.dir(this.req.url);
-  var resource = path.join(root, [this.req.url, 'json'].join('.'));
-  console.log(resource);
-  fs.accessAsync(resource, fs.F_OK)
-    .then(function () {
-      this.body = yield fs.readFileAsync(resource);
-    })
-    .catch(function (err) {
-      this.body = yield* superagent.get(host + this.req.url)
-        .then(function (resp) {
-          this.status = 200;
-        })
-        .catch(function (error) {
-          this.status = 500;
+function* send(path) {
+  function done() {
+    console.log('done');
+  }
+  return fs.createReadStream(path)
+      .on('error', done)
+      .on('finish', done);
+}
+
+
+function* through(resource) {
+  return new Promise(function (resolve, reject) {
+    agent.get(host + resource)
+      .buffer(true)
+      .set('Accept', 'application/json')
+      .end(function (err, resp) {
+        if (err) {
+          return reject({
+            status: 500,
+            body: resp.error
+          });
+        }
+        resolve({
+          status: 200,
+          body: resp.text
         });
+      });
     });
+}
+
+router.all('*', function *(next) {
+  const url = this.req.url;
+  const resource = path.join(root, [url, 'json'].join('.'));
+  console.log(resource);
+
+  if (yield fs.exists(resource)) {
+    this.body = yield send(resource);
+  }
+  else {
+    const response = yield through(url);
+    this.status = response.status;
+    this.body = response.body;
+  }
 });
 app.use(router.routes());
 app.use(router.allowedMethods());
