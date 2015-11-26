@@ -52,7 +52,8 @@ function* through(resource) {
         }
         resolve({
           status: 200,
-          body: resp.text
+          body: resp.text,
+          type: 'application/json'
         });
       });
     });
@@ -65,11 +66,13 @@ router.all('*', function *(next) {
 
   if (yield fs.exists(resource)) {
     this.body = yield send(resource);
+    this.type = 'application/json';
   }
   else {
     const response = yield through(url);
     this.status = response.status;
     this.body = response.body;
+    this.type = response.type ? response.type : 'text/plain';
   }
 });
 app.use(router.routes());
