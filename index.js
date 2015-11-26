@@ -10,6 +10,11 @@ var router = require('koa-router')();
 var root = path.join(__dirname, 'public');
 var host = process.env.HOST || 'http://localhost:5000/api';
 
+const cors = require('koa-cors');
+app.use(cors({
+    origin: true
+}));
+
 var json = require('koa-json');
 app.use(json());
 
