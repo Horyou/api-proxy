@@ -54,9 +54,8 @@ function* through(resource) {
       .end(function (err, resp) {
         logError(err);
         if (err) {
-          return reject({
-            status: 500,
-            body: resp.error
+          return resolve({
+            status: 404
           });
         }
         resolve({
