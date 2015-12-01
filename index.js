@@ -3,6 +3,8 @@ var path = require('path');
 var Promise = require('bluebird');
 var fs = require('mz/fs');
 var agent = require('superagent').agent();
+var defaults = require('lodash/object/defaults');
+
 
 app = koa();
 var router = require('koa-router')();
@@ -57,6 +59,18 @@ function* through(resource) {
         });
       });
     });
+}
+
+function respond(data) {
+  const response = defaults(data, {
+    status: !data.body ? 404 : 200,
+    body: 'Not found',
+    type: 'text/plain'
+  });
+
+  this.type = response.type;
+  this.status = response.status;
+  this.body = response.body;
 }
 
 router.all('*', function *(next) {
