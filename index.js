@@ -9,8 +9,10 @@ var defaults = require('lodash/object/defaults');
 app = koa();
 var router = require('koa-router')();
 
-var root = path.join(__dirname, 'public');
 var host = process.env.HOST || 'http://localhost:5000/api';
+var baseDir = path.join(__dirname, 'public');
+var root = '/api';
+var rootPattern = new RegExp(root);
 
 const cors = require('koa-cors');
 app.use(cors({
@@ -75,8 +77,7 @@ function respond(data) {
 
 router.all('*', function *(next) {
   const url = this.req.url;
-  const resource = path.join(root, [url, 'json'].join('.'));
-  console.log(resource);
+  const resource = path.join(baseDir, root, [url, 'json'].join('.'));
 
   if (yield fs.exists(resource)) {
     this.body = yield send(resource);
