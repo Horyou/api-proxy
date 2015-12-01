@@ -11,10 +11,12 @@ var logError = require('debug')('error');
 app = koa();
 var router = require('koa-router')();
 
-var host = process.env.HOST || 'http://localhost:5000/api';
 var baseDir = path.join(__dirname, 'public');
 var root = '/api';
 var rootPattern = new RegExp(root);
+
+var host = process.env.HOST || 'http://localhost:5000';
+var remote = process.env.REMOTE || 'http://localhost:5002';
 
 const cors = require('koa-cors');
 app.use(cors({
@@ -46,7 +48,7 @@ function* send(path) {
 
 function* through(resource) {
   return new Promise(function (resolve, reject) {
-    agent.get(host + resource)
+    agent.get(remote + resource)
       .buffer(true)
       .set('Accept', 'application/json')
       .end(function (err, resp) {
@@ -108,10 +110,11 @@ app.use(router.allowedMethods());
 
 var fn = app.callback();
 var options = {
-  port: process.env.PORT || 5000
+  port: process.env.PORT || 5000,
+  hostname: process.env.HOST || 'http://localhost'
 };
 
 require('http').createServer(fn).listen(options, function (err) {
   if (err) throw err;
-  console.log('Koala app listening on port %s', this.address().port);
+  console.log('API listening on port %s', this.address().port);
 });
