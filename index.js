@@ -82,6 +82,14 @@ router.all('*', function *(next) {
   const url = this.req.url;
   const resource = path.join(baseDir, root, [url, 'json'].join('.'));
 
+  const pong = respond.bind(this);
+
+  if (url.match(rootPattern) || url.match('favicon.ico')) {
+    return pong({
+      status: 404
+    });
+  }
+
   logResource(resource);
 
   if (yield fs.exists(resource)) {
