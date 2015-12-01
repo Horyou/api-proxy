@@ -5,6 +5,8 @@ var fs = require('mz/fs');
 var agent = require('superagent').agent();
 var defaults = require('lodash/object/defaults');
 
+var logResource = require('debug')('resource');
+var logError = require('debug')('error');
 
 app = koa();
 var router = require('koa-router')();
@@ -48,6 +50,7 @@ function* through(resource) {
       .buffer(true)
       .set('Accept', 'application/json')
       .end(function (err, resp) {
+        logError(err);
         if (err) {
           return reject({
             status: 500,
@@ -78,6 +81,8 @@ function respond(data) {
 router.all('*', function *(next) {
   const url = this.req.url;
   const resource = path.join(baseDir, root, [url, 'json'].join('.'));
+
+  logResource(resource);
 
   if (yield fs.exists(resource)) {
     this.body = yield send(resource);
