@@ -95,16 +95,18 @@ router.all('*', function *(next) {
   logResource(resource);
 
   if (yield fs.exists(resource)) {
-    this.body = yield send(resource);
-    this.type = 'application/json';
+    body = yield send(resource);
+    return pong({
+      body: body,
+      type: 'application/json'
+    });
   }
-  else {
-    const response = yield through(url);
-    this.status = response.status;
-    this.body = response.body;
-    this.type = response.type ? response.type : 'text/plain';
-  }
+
+  const response = yield through(url);
+
+  pong(response);
 });
+
 app.use(router.routes());
 app.use(router.allowedMethods());
 
