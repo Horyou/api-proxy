@@ -5,9 +5,11 @@ var fs = require('mz/fs');
 var agent = require('superagent').agent();
 var defaults = require('lodash/object/defaults');
 
-var logResource = require('debug')('resource');
-var logError = require('debug')('error');
-var logMiddleware = require('debug')('middleware');
+const log = {
+  resource: require('debug')('resource'),
+  error: require('debug')('error'),
+  middleware: require('debug')('middleware')
+};
 
 app = koa();
 var router = require('koa-router')();
@@ -42,7 +44,7 @@ app.use(function* (next) {
       type: 'text/plain'
     });
 
-    logMiddleware('sending response');
+    log.middleware('sending response');
     this.type = response.type;
     this.status = response.status;
 
@@ -72,7 +74,7 @@ function* through(resource) {
       .buffer(true)
       .set('Accept', 'application/json')
       .end(function (err, resp) {
-        logError(err);
+        log.error(err);
         if (err) {
           return resolve({
             status: 404
@@ -88,18 +90,18 @@ function* through(resource) {
 }
 
 app.use(function *(next) {
-  logMiddleware('api:local');
+  log.middleware('api:local');
 
   const resource = path.join(baseDir, root, [this.path, 'json'].join('.'));
 
   if (this.path.match(rootPattern) || this.path.match('favicon.ico')) {
-    logResource('non supported resource');
+    log.resource('non supported resource');
     return {
       status: 404
     };
   }
 
-  logResource(resource);
+  log.resource(resource);
 
   if (yield fs.exists(resource)) {
     body = yield send(resource);
@@ -113,7 +115,7 @@ app.use(function *(next) {
 });
 
 app.use(function *(next) {
-  logMiddleware('api:remote');
+  log.middleware('api:remote');
   return yield through(this.req.url);
 });
 
