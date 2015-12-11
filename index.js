@@ -23,6 +23,7 @@ var baseDir = path.join(__dirname, 'public');
 var root = '/api';
 var rootPattern = new RegExp(root);
 
+var isSecure = process.env.HTTPS || false;
 var host = process.env.HOST || 'http://localhost:5000';
 var remote = process.env.REMOTE || 'http://localhost:5002';
 
@@ -128,7 +129,7 @@ var options = {
   hostname: process.env.HOST || 'http://localhost'
 };
 
-require('http').createServer(fn).listen(options, function (err) {
+require(isSecure ? 'https' : 'http').createServer(fn).listen(options, function (err) {
   if (err) throw err;
   console.log('API listening on port %s', this.address().port);
 });
