@@ -59,7 +59,7 @@ app.use(function* (next) {
   }
 });
 
-function* send(path) {
+function* sendFile(path) {
   function done() {
     console.log('done');
   }
@@ -69,7 +69,7 @@ function* send(path) {
 }
 
 
-function* through(resource) {
+function* proxy(resource) {
   return new Promise(function (resolve, reject) {
     agent.get(remote + resource)
       .buffer(true)
@@ -105,7 +105,7 @@ app.use(function *(next) {
   log.resource(resource);
 
   try {
-    const body = yield* send(resource);
+    const body = yield* sendFile(resource);
 
     return {
       body: body,
@@ -119,7 +119,7 @@ app.use(function *(next) {
 
 app.use(function *(next) {
   log.middleware('api:remote');
-  return yield through(this.req.url);
+  return yield proxy(this.req.url);
 });
 
 app.use(router.routes());
