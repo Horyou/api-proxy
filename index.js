@@ -4,6 +4,7 @@ var Promise = require('bluebird');
 var fs = require('mz/fs');
 var agent = require('superagent').agent();
 var defaults = require('lodash/object/defaults');
+const send = require('koa-send');
 
 const log = {
   resource: require('debug')('resource'),
@@ -39,6 +40,9 @@ app.use(function* (next) {
   try {
     const data = yield* next;
 
+    if (!data) {
+      return;
+    }
     const response = defaults(data, {
       status: !data.body ? 404 : 200,
       body: 'Not found',
@@ -58,20 +62,6 @@ app.use(function* (next) {
     this.body = err.message;
   }
 });
-
-function* sendFile(path) {
-  function error (error) {
-    log.resource('resource not found.');
-  }
-
-  function done() {
-    console.log('done');
-  }
-  return fs.createReadStream(path)
-      .on('error', error)
-      .on('finish', done);
-}
-
 
 function* proxy(resource) {
   return new Promise(function (resolve, reject) {
@@ -97,28 +87,11 @@ function* proxy(resource) {
 app.use(function *(next) {
   log.middleware('api:local');
 
-  const resource = path.join(baseDir, root, [this.path, 'json'].join('.'));
-
-  if (this.path.match(rootPattern) || this.path.match('favicon.ico')) {
-    log.resource('non supported resource');
-    return {
-      status: 404
-    };
+  if (yield send(this, [this.path, 'json'].join('.'), { root: __dirname + '/public/api' })) {
+    return;
   }
 
-  log.resource(resource);
-
-  try {
-    const body = yield* sendFile(resource);
-
-    return {
-      body: body,
-      type: 'application/json'
-    };
-  }
-  catch(error) {
-    return yield* next;
-  }
+  yield* next;
 });
 
 app.use(function *(next) {
