@@ -13,7 +13,6 @@ const log = {
 };
 
 app = koa();
-var router = require('koa-router')();
 
 var jsonp = require('koa-safe-jsonp');
 jsonp(app, {
@@ -84,6 +83,8 @@ function* proxy(resource) {
     });
 }
 
+require('./router')(app);
+
 app.use(function *(next) {
   log.middleware('api:local');
 
@@ -98,9 +99,6 @@ app.use(function *(next) {
   log.middleware('api:remote');
   return yield proxy(this.req.url);
 });
-
-app.use(router.routes());
-app.use(router.allowedMethods());
 
 var fn = app.callback();
 var options = {
