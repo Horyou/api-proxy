@@ -60,11 +60,15 @@ app.use(function* (next) {
 });
 
 function* sendFile(path) {
+  function error (error) {
+    log.resource('resource not found.');
+  }
+
   function done() {
     console.log('done');
   }
   return fs.createReadStream(path)
-      .on('error', done)
+      .on('error', error)
       .on('finish', done);
 }
 
