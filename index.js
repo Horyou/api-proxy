@@ -34,7 +34,21 @@ app.use(json());
 
 app.use(function* (next) {
   try {
-    yield* next;
+    const data = yield* next;
+
+    const response = defaults(data, {
+      status: !data.body ? 404 : 200,
+      body: 'Not found',
+      type: 'text/plain'
+    });
+
+    logMiddleware('sending response');
+    this.type = response.type;
+    this.status = response.status;
+
+    // send response
+    const prop = this.query.callback ? 'jsonp' : 'body';
+    this[prop] = response.body;
   }
   catch (err) {
     this.status = 500;
@@ -73,40 +87,27 @@ function* through(resource) {
     });
 }
 
-function respond(data) {
-  const response = defaults(data, {
-    status: !data.body ? 404 : 200,
-    body: 'Not found',
-    type: 'text/plain'
-  });
-
-  this.type = response.type;
-  this.status = response.status;
-  this.body = response.body;
-}
-
 app.use(function *(next) {
   logMiddleware('api:local');
   const url = this.req.url;
   const resource = path.join(baseDir, root, [url, 'json'].join('.'));
 
-  const pong = respond.bind(this);
 
   if (url.match(rootPattern) || url.match('favicon.ico')) {
     logResource('non supported resource');
-    return pong({
+    return {
       status: 404
-    });
+    };
   }
 
   logResource(resource);
 
   if (yield fs.exists(resource)) {
     body = yield send(resource);
-    return pong({
+    return {
       body: body,
       type: 'application/json'
-    });
+    };
   }
 
   yield* next;
@@ -114,9 +115,7 @@ app.use(function *(next) {
 
 app.use(function *(next) {
   logMiddleware('api:remote');
-  const response = yield through(this.req.url);
-
-  pong(response);
+  return yield through(this.req.url);
 });
 
 app.use(router.routes());
