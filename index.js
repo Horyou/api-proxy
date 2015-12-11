@@ -104,15 +104,17 @@ app.use(function *(next) {
 
   log.resource(resource);
 
-  if (yield fs.exists(resource)) {
-    body = yield send(resource);
+  try {
+    const body = yield* send(resource);
+
     return {
       body: body,
       type: 'application/json'
     };
   }
-
-  yield* next;
+  catch(error) {
+    return yield* next;
+  }
 });
 
 app.use(function *(next) {
