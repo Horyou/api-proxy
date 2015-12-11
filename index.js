@@ -7,6 +7,7 @@ var defaults = require('lodash/object/defaults');
 
 var logResource = require('debug')('resource');
 var logError = require('debug')('error');
+var logMiddleware = require('debug')('middleware');
 
 app = koa();
 var router = require('koa-router')();
@@ -80,12 +81,14 @@ function respond(data) {
 }
 
 app.use(function *(next) {
+  logMiddleware('api:local');
   const url = this.req.url;
   const resource = path.join(baseDir, root, [url, 'json'].join('.'));
 
   const pong = respond.bind(this);
 
   if (url.match(rootPattern) || url.match('favicon.ico')) {
+    logResource('non supported resource');
     return pong({
       status: 404
     });
@@ -105,6 +108,7 @@ app.use(function *(next) {
 });
 
 app.use(function *(next) {
+  logMiddleware('api:remote');
   const response = yield through(this.req.url);
 
   pong(response);
