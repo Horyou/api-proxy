@@ -35,6 +35,9 @@ app.use(cors({
 var json = require('koa-json');
 app.use(json());
 
+const views = require('koa-views');
+app.use(views('views'));
+
 app.use(function* (next) {
   try {
     const data = yield* next;
