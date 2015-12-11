@@ -79,7 +79,7 @@ function respond(data) {
   this.body = response.body;
 }
 
-router.all('*', function *(next) {
+app.use(function *(next) {
   const url = this.req.url;
   const resource = path.join(baseDir, root, [url, 'json'].join('.'));
 
@@ -101,7 +101,11 @@ router.all('*', function *(next) {
     });
   }
 
-  const response = yield through(url);
+  yield* next;
+});
+
+app.use(function *(next) {
+  const response = yield through(this.req.url);
 
   pong(response);
 });
