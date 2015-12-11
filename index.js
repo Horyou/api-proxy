@@ -12,6 +12,11 @@ var logMiddleware = require('debug')('middleware');
 app = koa();
 var router = require('koa-router')();
 
+var jsonp = require('koa-safe-jsonp');
+jsonp(app, {
+  limit: 50, // max callback name string length, default is 512
+});
+
 var baseDir = path.join(__dirname, 'public');
 var root = '/api';
 var rootPattern = new RegExp(root);
