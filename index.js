@@ -89,11 +89,10 @@ function* through(resource) {
 
 app.use(function *(next) {
   logMiddleware('api:local');
-  const url = this.req.url;
-  const resource = path.join(baseDir, root, [url, 'json'].join('.'));
 
+  const resource = path.join(baseDir, root, [this.path, 'json'].join('.'));
 
-  if (url.match(rootPattern) || url.match('favicon.ico')) {
+  if (this.path.match(rootPattern) || this.path.match('favicon.ico')) {
     logResource('non supported resource');
     return {
       status: 404
