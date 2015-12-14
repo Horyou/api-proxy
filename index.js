@@ -1,3 +1,5 @@
+require('dotenv').load();
+
 var koa = require('koa');
 var path = require('path');
 var Promise = require('bluebird');
