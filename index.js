@@ -28,9 +28,7 @@ var rootPattern = new RegExp(root);
 
 var isSecure = process.env.HTTPS || false;
 var host = process.env.HOST || 'http://localhost:5000';
-var remote = process.env.REMOTE || 'http://localhost:5002';
-
-var proxy = pixie({host: remote});
+var remote = process.env.REMOTE;
 
 const cors = require('koa-cors');
 app.use(cors({
@@ -82,10 +80,12 @@ app.use(function *(next) {
   yield* next;
 });
 
-app.use(proxy());
-app.use(function *(next) {
-  log.middleware('api:remote');
-});
+if (remote) {
+  app.use(pixie({host: remote})());
+  app.use(function *(next) {
+    log.middleware('api:remote');
+  });
+}
 
 var fn = app.callback();
 var options = {
