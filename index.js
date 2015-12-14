@@ -77,7 +77,7 @@ function* through(resource) {
         log.error(err);
         if (err) {
           return resolve({
-            status: 404
+            status: err.status
           });
         }
         resolve({
