@@ -7,6 +7,7 @@ var fs = require('mz/fs');
 var agent = require('superagent').agent();
 var defaults = require('lodash/object/defaults');
 const send = require('koa-send');
+var pixie = require('koa-pixie-proxy');
 
 const log = {
   resource: require('debug')('resource'),
@@ -27,7 +28,7 @@ var rootPattern = new RegExp(root);
 
 var isSecure = process.env.HTTPS || false;
 var host = process.env.HOST || 'http://localhost:5000';
-var remote = process.env.REMOTE || 'http://localhost:5002';
+var remote = process.env.REMOTE;
 
 const cors = require('koa-cors');
 app.use(cors({
@@ -67,27 +68,6 @@ app.use(function* (next) {
   }
 });
 
-function* proxy(resource) {
-  return new Promise(function (resolve, reject) {
-    agent.get(remote + resource)
-      .buffer(true)
-      .set('Accept', 'application/json')
-      .end(function (err, resp) {
-        log.error(err);
-        if (err) {
-          return resolve({
-            status: 404
-          });
-        }
-        resolve({
-          status: 200,
-          body: resp.text,
-          type: 'application/json'
-        });
-      });
-    });
-}
-
 require('./router')(app);
 
 app.use(function *(next) {
@@ -100,10 +80,12 @@ app.use(function *(next) {
   yield* next;
 });
 
-app.use(function *(next) {
-  log.middleware('api:remote');
-  return yield proxy(this.req.url);
-});
+if (remote) {
+  app.use(pixie({host: remote})());
+  app.use(function *(next) {
+    log.middleware('api:remote');
+  });
+}
 
 var fn = app.callback();
 var options = {
